@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <glad/glad.h>
+#include "engine/shader.h"
 #include <GLFW/glfw3.h>
+
 #include <stdbool.h>
 #include "utils/util.h"
 
@@ -35,57 +37,15 @@ int main() {
     }
     glViewport(0, 0, mode->width, mode->height);
 
-    const char* vertexSource = parseShader("assets/basic.vert");
-    const char* fragmentSource = parseShader("assets/basic.frag");
+    Shader shader = {0};
+    int success = create_shader(&shader, "assets/basic.vert", "assets/basic.frag");
+    if(!success){
+        glfwTerminate();
+        return -1;
+    }
 
-    if (!vertexSource) {
-        perror("Could not load vertex shader");
+
     
-    }
-    if (!fragmentSource) {
-        perror("could not load fragment shader");
-    
-    }
-
-
-
-    GLuint vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexSource, NULL);
-    glCompileShader(vertexShader);
-
-    int success;
-    char info_log[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, NULL, info_log);
-        printf("Vertex shader error:%s", info_log);
-
-    }
-    GLuint fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
-    glCompileShader(fragmentShader);
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, info_log);
-        printf("Fragment shader error:%s", info_log);
-
-    }
-
-    GLuint shaderProgram;
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, info_log);
-        printf("Shader Program error: %s", info_log);
-    
-    }
-
-
 
 
 
@@ -143,8 +103,11 @@ int main() {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        use_shader(&shader);
+        set_uniform_float(&shader, "u_time", glfwGetTime());
 
-        glUseProgram(shaderProgram);
+    
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
 
@@ -156,8 +119,7 @@ int main() {
 
 
 
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
+    delete_shader(&shader);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

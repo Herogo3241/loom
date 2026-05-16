@@ -7,7 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLAD_DIR vendored/glad)
 
-file(GLOB SOURCES "src/*.c")
+file(GLOB_RECURSE SOURCES "src/*.c")
+
+message("source: ${SOURCES}")
 
 add_subdirectory(vendored/glfw)
 
@@ -26,6 +28,8 @@ if (WIN32)
         glad
         opengl32
     )
+
+    set_target_properties(loom PROPERTIES OUTPUT_NAME "loom_dev")
 else()
     find_package(OpenGL REQUIRED)
 
