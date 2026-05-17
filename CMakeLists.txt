@@ -26,6 +26,7 @@ target_include_directories(loom PRIVATE vendored/glfw/include vendored/stb vendo
 
 if (WIN32)
     target_link_libraries(loom PRIVATE
+        cglm
         glfw
         glad
         opengl32
