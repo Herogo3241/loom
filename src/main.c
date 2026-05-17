@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <glad/glad.h>
-#include "cglm/affine.h"
-#include "cglm/affine2d-post.h"
-#include "utils/util.h"
 #include "engine/shader.h"
+#include "engine/texture.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 #include <cglm/cglm.h>
@@ -146,10 +144,17 @@ int main() {
     glEnableVertexAttribArray(1);
 
 
-    GLuint texture = load_texture("assets/textures/wood.jpg");
+    Texture woodTex = {0};
+    Texture imgTex = {0};
+    if(!create_texture(&woodTex, "assets/textures/wood.jpg") || !create_texture(&imgTex, "assets/textures/test.png")){
+        glfwTerminate();
+        return -1;
+    }
+        
 
     use_shader(&shader);
-    set_uniform_int(&shader, "u_texture", 0);
+    set_uniform_int(&shader, "u_texture1", 0);
+    set_uniform_int(&shader, "u_texture2", 1);
 
 
 
@@ -176,8 +181,8 @@ int main() {
         set_uniform_mat(&shader, "projection", projection);
 
     
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
+        bind_texture(&woodTex, 0);
+        bind_texture(&imgTex, 1);
 
         glBindVertexArray(VAO);
         for(unsigned int i = 0; i < sizeof(cubePositions)/sizeof(vec3); i++){
@@ -200,6 +205,8 @@ int main() {
 
 
 
+    delete_texture(&woodTex);
+    delete_texture(&imgTex);
     delete_shader(&shader);
     glfwDestroyWindow(window);
     glfwTerminate();
