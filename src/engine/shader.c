@@ -65,3 +65,11 @@ void delete_shader(Shader *s){
 void set_uniform_float(Shader *s, const char *name, float value){
     glUniform1f(glGetUniformLocation(s->id, name), value);
 }
+
+void set_uniform_int(Shader *s, const char *name, int value){
+    glUniform1i(glGetUniformLocation(s->id, name), value);
+}
+
+void set_uniform_mat(Shader *s, const char *name, mat4 value){
+    glUniformMatrix4fv(glGetUniformLocation(s->id, name),1, GL_FALSE, (float*)value);
+}

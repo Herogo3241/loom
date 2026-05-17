@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <glad/glad.h>
+#include "cglm/affine.h"
+#include "cglm/affine2d-post.h"
+#include "utils/util.h"
 #include "engine/shader.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <cglm/cglm.h>
+#include <cglm/cam.h>
 
 
 void processInput(GLFWwindow* window){
@@ -48,6 +51,7 @@ int main() {
         perror("failed to initalize glad");       
     }
     glViewport(0, 0, mode->width, mode->height);
+    glEnable(GL_DEPTH_TEST);
 
 
     Shader shader = {0};
@@ -59,24 +63,68 @@ int main() {
 
 
     float vertices[] = {
-        // x,  y,  z
-        -0.5f, -0.5f, 0.0f,     0.6f,0.4f,0.6f,     0.0f, 0.0f,
-        -0.5f, 0.5f, 0.0f,      0.3f,0.6f,0.2f,     0.0f, 1.0f,
-        0.5f, 0.5f, 0.0f,       0.8f,0.1f,0.0f,     1.0f, 1.0f,
-        0.5f, -0.5f, 0.0f,      0.2f, 0.9f, 0.3f,    1.0f, 0.0f
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+    
+    vec3 cubePositions[] = {
+        {  0.0f,   0.0f,   0.0f }, // Center
+        {  2.3f,   1.5f,  -4.5f },
+        { -3.1f,  -2.2f,  -7.0f },
+        {  1.5f,  -3.4f, -12.5f },
+        { -2.8f,   3.1f,  -5.2f },
+        {  3.9f,  -1.0f,  -9.8f },
+        { -1.2f,   2.7f, -14.1f },
+        {  2.7f,   3.8f,  -6.3f },
+        { -3.5f,  -0.5f, -11.0f },
+        {  0.8f,  -2.6f,  -3.5f }
     };
 
-    GLuint indices[] = {
-        0, 1, 2,
-        2, 3, 0
-    };
-
+    
 
 
     GLuint VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
 
 
     glBindVertexArray(VAO);
@@ -88,53 +136,20 @@ int main() {
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    //color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8* sizeof(float), (void*)(3*sizeof(float)));
+    //texture attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
 
 
-    //texture attribute
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(6*sizeof(float)));
-    glEnableVertexAttribArray(2);
+    GLuint texture = load_texture("assets/textures/wood.jpg");
 
-
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    int width, height, channels;
-    stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load("assets/textures/test.png", &width, &height, &channels, 0);
-    if (data) {
-        GLenum format;
-        switch (channels) {
-            case 3:
-                format = GL_RGB;
-                glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-                break;
-            case 4:
-                format = GL_RGBA;
-                break;
-        
-        }
-        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data); 
-        glGenerateMipmap(GL_TEXTURE_2D);   
-    }else{
-        perror("Failed to load image");
-    }
-
+    use_shader(&shader);
+    set_uniform_int(&shader, "u_texture", 0);
 
 
 
@@ -142,16 +157,40 @@ int main() {
         processInput(window);
 
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         use_shader(&shader);
         set_uniform_float(&shader, "u_time", glfwGetTime());
 
-    
+        
 
+        mat4 view;
+        glm_mat4_identity(view);
+        glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+
+        mat4 projection;
+        float aspect_ratio = (float)mode->width/(float)mode->height;
+        glm_perspective(glm_rad(45.0f), aspect_ratio, 0.1f, 100.0f, projection);
+
+        set_uniform_mat(&shader, "view", view);
+        set_uniform_mat(&shader, "projection", projection);
+
+    
+        glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
+
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+        for(unsigned int i = 0; i < sizeof(cubePositions)/sizeof(vec3); i++){
+            mat4 model;
+            glm_mat4_identity(model);
+            glm_translate(model, cubePositions[i]);
+            glm_rotate(model, glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
+            glm_scale_uni(model, 0.5f);
+            set_uniform_mat(&shader, "model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        
 
 
         glfwSwapBuffers(window);

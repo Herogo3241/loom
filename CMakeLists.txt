@@ -12,7 +12,7 @@ file(GLOB_RECURSE SOURCES "src/*.c")
 message("source: ${SOURCES}")
 
 add_subdirectory(vendored/glfw)
-add_subdirectory(vendored/glm)
+add_subdirectory(vendored/cglm)
 
 add_library(glad ${GLAD_DIR}/src/glad.c)
 target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
@@ -36,7 +36,7 @@ else()
     find_package(OpenGL REQUIRED)
 
     target_link_libraries(loom PRIVATE
-        glm
+        cglm
         glfw
         glad
         OpenGL::GL
