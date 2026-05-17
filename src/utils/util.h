@@ -6,8 +6,8 @@
 char* parseShader(const char* filepath){
     FILE* fp;
 
-    errno_t err = fopen_s(&fp, filepath, "rb");
-    if(err){
+    fp = fopen(filepath, "rb");
+    if(!fp){
         perror("failed to open shader\n");
         return NULL;
     }
