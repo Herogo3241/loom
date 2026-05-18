@@ -20,7 +20,7 @@ target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 
 add_executable(loom ${SOURCES})
 
-target_include_directories(loom PRIVATE vendored/glfw/include vendored/stb vendored/glm)
+target_include_directories(loom PRIVATE vendored/glfw/include vendored/stb vendored/glm vendored/nuklear vendored/nuklear/demo/glfw_opengl3)
 
 
 
