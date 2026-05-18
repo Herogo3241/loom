@@ -3,12 +3,14 @@
 #include "engine/shader.h"
 #include "engine/texture.h"
 #include "engine/camera.h"
+#include "engine/window.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
 
 
+Window window = {0};
 Camera camera = {0};
 
 
@@ -36,55 +38,47 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
 
 void processInput(GLFWwindow* window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true); } if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_FORWARD, deltaTime);
+        glfwSetWindowShouldClose(window, true); } 
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_RIGHT, deltaTime);
+
+    float x_offset = 0.0f;
+    float y_offset = 0.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        x_offset = 1.0f;  
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        x_offset = -1.0f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        y_offset = 1.0f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        y_offset = -1.0f;
+    }
+
+    if (x_offset != 0.0f || y_offset != 0.0f) {
+        camera_process_mouse(&camera, x_offset, y_offset, deltaTime, true);
+    }
+
+    
 }
 
 
 int main() {
-    glfwInit();
-
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    int count;
-    GLFWmonitor** monitors = glfwGetMonitors(&count);
-    GLFWmonitor* monitor;
-
-    if (count > 1) {
-        monitor = monitors[1];
-    }else {
-        monitor = glfwGetPrimaryMonitor();
+    if(!create_window_fullscreen(&window, "Loom")){
+        window_destroy(&window);
+        return -1;
     }
-    const char* monitor_name = glfwGetMonitorName(monitor);
-    printf("Loom running on %s\n", monitor_name);
-    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-    printf("Width: %d, Height: %d\n", mode->width, mode->height);
-    lastPosX = mode->width / 2;
-    lastPosY = mode->height / 2;
-
-
-    GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "loom", monitor, NULL);
-    if (!window){
-        perror("Error creating window\n");
-        glfwTerminate();
-    }
-
-    glfwMakeContextCurrent(window);
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        perror("failed to initalize glad");       
-    }
-    glViewport(0, 0, mode->width, mode->height);
-    glEnable(GL_DEPTH_TEST);
 
 
     Shader shader = {0};
     int success = create_shader(&shader, "assets/shaders/basic.vert", "assets/shaders/basic.frag");
     if(!success){
-        glfwTerminate();
+        window_destroy(&window);
         return -1;
     }
 
@@ -176,7 +170,7 @@ int main() {
     Texture woodTex = {0};
     Texture imgTex = {0};
     if(!create_texture(&woodTex, "assets/textures/wood.jpg") || !create_texture(&imgTex, "assets/textures/test.png")){
-        glfwTerminate();
+        window_destroy(&window);
         return -1;
     }
         
@@ -186,14 +180,14 @@ int main() {
     set_uniform_int(&shader, "u_texture2", 1);
 
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    window_lock_cursor(&window);
+    window_set_cursor_callback(&window,mouse_callback);
 
     init_camera(&camera, (vec3){0.0f, 0.0f, 3.0f});
-    camera_set_sensitivity(&camera, 0.01f);
+    camera_set_sensitivity(&camera, 1.25f);
 
 
-    while (!glfwWindowShouldClose(window)) {
+    while (!window_should_close(&window)) {
 
 
         currentFrame = (float)glfwGetTime();
@@ -203,7 +197,7 @@ int main() {
 
 
 
-        processInput(window);
+        processInput(window.handle);
 
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -219,7 +213,7 @@ int main() {
         camera_get_view_matrix(&camera, view);
 
         mat4 projection;
-        float aspect_ratio = (float)mode->width/(float)mode->height;
+        float aspect_ratio = window_aspect_ratio(&window);
         glm_perspective(glm_rad(45.0f), aspect_ratio, 0.1f, 100.0f, projection);
 
         set_uniform_mat(&shader, "view", view);
@@ -234,7 +228,7 @@ int main() {
             mat4 model;
             glm_mat4_identity(model);
             glm_translate(model, cubePositions[i]);
-            glm_rotate(model, glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
+            // glm_rotate(model, glfwGetTime() * glm_rad(50.0f), (vec3){0.5f, 1.0f, 0.0f});
             glm_scale_uni(model, 0.5f);
             set_uniform_mat(&shader, "model", model);
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -243,8 +237,7 @@ int main() {
         
 
 
-        glfwSwapBuffers(window);
-        glfwPollEvents(); 
+        window_swap_and_poll(&window);
 
     }
 
@@ -253,7 +246,6 @@ int main() {
     delete_texture(&woodTex);
     delete_texture(&imgTex);
     delete_shader(&shader);
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    window_destroy(&window);
     return 0;
 }
