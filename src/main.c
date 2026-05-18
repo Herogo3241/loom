@@ -8,6 +8,13 @@
 #include <cglm/cam.h>
 
 
+
+float currentFrame = 0.0f;
+float lastFrame = 0.0f;
+
+float deltaTime;
+
+
 void processInput(GLFWwindow* window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
@@ -105,16 +112,16 @@ int main() {
     };
     
     vec3 cubePositions[] = {
-        {  0.0f,   0.0f,   0.0f }, // Center
-        {  2.3f,   1.5f,  -4.5f },
-        { -3.1f,  -2.2f,  -7.0f },
-        {  1.5f,  -3.4f, -12.5f },
-        { -2.8f,   3.1f,  -5.2f },
-        {  3.9f,  -1.0f,  -9.8f },
-        { -1.2f,   2.7f, -14.1f },
-        {  2.7f,   3.8f,  -6.3f },
-        { -3.5f,  -0.5f, -11.0f },
-        {  0.8f,  -2.6f,  -3.5f }
+        {0.0f,  0.0f,  0.0f},
+        {2.0f,  5.0f, -15.0f},
+        {-1.5f, -2.2f, -2.5f},
+        {-3.8f, -2.0f, -12.3f},
+        {2.4f, -0.4f, -3.5f},
+        {-1.7f,  3.0f, -7.5f},
+        {1.3f, -2.0f, -2.5f},
+        {1.5f,  2.0f, -2.5f},
+        {1.5f,  0.2f, -1.5f},
+        {-1.3f,  1.0f, -1.5f}
     };
 
     
@@ -159,6 +166,15 @@ int main() {
 
 
     while (!glfwWindowShouldClose(window)) {
+
+
+        currentFrame = (float)glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        
+
+
+
         processInput(window);
 
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -167,11 +183,12 @@ int main() {
         use_shader(&shader);
         set_uniform_float(&shader, "u_time", glfwGetTime());
 
+
+        
         
 
         mat4 view;
-        glm_mat4_identity(view);
-        glm_translate(view, (vec3){0.0f, 0.0f, -3.0f});
+        glm_lookat(cameraPos, targetPos, cameraUp, view);
 
         mat4 projection;
         float aspect_ratio = (float)mode->width/(float)mode->height;
