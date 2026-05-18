@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <glad/glad.h>
 #include "engine/shader.h"
 #include "engine/texture.h"
@@ -69,7 +68,11 @@ void processInput(GLFWwindow* window){
 
 
 int main() {
-    if(!create_window_fullscreen(&window, "Loom")){
+    // if(!create_window_fullscreen(&window, "Loom")){
+    //     window_destroy(&window);
+    //     return -1;
+    // }
+    if(!create_window(&window, "Loom", 1280, 720)){
         window_destroy(&window);
         return -1;
     }

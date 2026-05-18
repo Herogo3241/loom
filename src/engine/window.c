@@ -70,7 +70,7 @@ bool create_window(Window *w, const char *title, int width, int height){
     
     printf("Width: %d, Height: %d\n", w->width, w->height);
 
-    w->handle = glfwCreateWindow(w->width, w->height, title, monitor, NULL);
+    w->handle = glfwCreateWindow(w->width, w->height, title, NULL, NULL);
     if (!w->handle) {
         perror("Error creating window\n");
         return false;
