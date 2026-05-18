@@ -36,9 +36,11 @@ void camera_get_view_matrix(Camera* c, mat4 view);
 
 void camera_process_keyboard(Camera* c, Camera_Movement direction, float delta);
 
-void camera_process_mouse(Camera* c, float x_offset, float y_offset, bool constrain_pitch);
+void camera_process_mouse(Camera* c, float x_offset, float y_offset,float delta, bool constrain_pitch);
 
 void camera_update_vectors(Camera* c);
+
+void camera_set_sensitivity(Camera* c, float value);
 
 
 

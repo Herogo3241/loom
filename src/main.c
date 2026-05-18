@@ -9,18 +9,37 @@
 #include <cglm/cam.h>
 
 
-Camera camera;
+Camera camera = {0};
+
+
 float currentFrame = 0.0f;
 float lastFrame = 0.0f;
+static float deltaTime;
+int lastPosX;
+int lastPosY;
+bool isfirstMouse = true;
 
-float deltaTime;
+void mouse_callback(GLFWwindow* window, double xpos, double ypos){
+    if (isfirstMouse) {
+        lastPosX = xpos;
+        lastPosY = ypos;
+        isfirstMouse = false;
+    }
+    float x_offset = xpos - lastPosX;
+    float y_offset = lastPosY - ypos;
+    lastPosX = xpos;
+    lastPosY = ypos;
 
+
+    camera_process_mouse(&camera, x_offset, y_offset, deltaTime, true);
+}
 
 void processInput(GLFWwindow* window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
-
-    }
+        glfwSetWindowShouldClose(window, true); } if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) camera_process_keyboard(&camera, CAMERA_RIGHT, deltaTime);
 }
 
 
@@ -44,6 +63,8 @@ int main() {
     printf("Loom running on %s\n", monitor_name);
     const GLFWvidmode* mode = glfwGetVideoMode(monitor);
     printf("Width: %d, Height: %d\n", mode->width, mode->height);
+    lastPosX = mode->width / 2;
+    lastPosY = mode->height / 2;
 
 
     GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "loom", monitor, NULL);
@@ -165,7 +186,11 @@ int main() {
     set_uniform_int(&shader, "u_texture2", 1);
 
 
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
     init_camera(&camera, (vec3){0.0f, 0.0f, 3.0f});
+    camera_set_sensitivity(&camera, 0.01f);
 
 
     while (!glfwWindowShouldClose(window)) {

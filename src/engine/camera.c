@@ -47,9 +47,9 @@ void camera_process_keyboard(Camera *c, Camera_Movement direction, float delta){
 }
 
 
-void camera_process_mouse(Camera *c, float x_offset, float y_offset, bool constrain_pitch){
-    x_offset *= c->sensitivity;
-    y_offset *= c->sensitivity;
+void camera_process_mouse(Camera *c, float x_offset, float y_offset,float delta, bool constrain_pitch){
+    x_offset *= c->sensitivity * delta * 100.f;
+    y_offset *= c->sensitivity * delta * 100.f;
 
 
     c->yaw += x_offset;
@@ -76,4 +76,8 @@ void camera_update_vectors(Camera *c){
     glm_vec3_cross(c->right, c->front, c->up);
     glm_vec3_normalize(c->up);
 
+}
+
+void camera_set_sensitivity(Camera *c, float value){
+    c->sensitivity = value;
 }
