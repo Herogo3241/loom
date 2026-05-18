@@ -9,6 +9,7 @@ typedef struct{
     int width;
     int height;
     const char* title;
+    bool isFullscreen;
 }Window;
 
 bool create_window_fullscreen(Window* w, const char* title); 

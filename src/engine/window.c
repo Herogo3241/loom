@@ -3,6 +3,7 @@
 
 
 bool create_window_fullscreen(Window *w, const char *title){
+    w->isFullscreen = true;
     if (!glfwInit()) {
         perror("Failed to initalize glfw!");
         return false; 
@@ -45,6 +46,7 @@ bool create_window_fullscreen(Window *w, const char *title){
 }
 
 bool create_window(Window *w, const char *title, int width, int height){
+    w->isFullscreen = false;
     if (!glfwInit()) {
         perror("Failed to initalize glfw!");
         return false; 

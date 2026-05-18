@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+
 #include "engine/shader.h"
 #include "engine/texture.h"
 #include "engine/camera.h"
@@ -19,6 +20,8 @@ static float deltaTime;
 int lastPosX;
 int lastPosY;
 bool isfirstMouse = true;
+
+struct nk_context *nk_ctx;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos){
     if (isfirstMouse) {
@@ -68,15 +71,11 @@ void processInput(GLFWwindow* window){
 
 
 int main() {
-    // if(!create_window_fullscreen(&window, "Loom")){
-    //     window_destroy(&window);
-    //     return -1;
-    // }
-    if(!create_window(&window, "Loom", 1280, 720)){
+    if(!create_window_fullscreen(&window, "Loom")){
         window_destroy(&window);
         return -1;
     }
-
+    
 
     Shader shader = {0};
     int success = create_shader(&shader, "assets/shaders/basic.vert", "assets/shaders/basic.frag");
@@ -182,12 +181,11 @@ int main() {
     set_uniform_int(&shader, "u_texture1", 0);
     set_uniform_int(&shader, "u_texture2", 1);
 
-
     window_lock_cursor(&window);
     window_set_cursor_callback(&window,mouse_callback);
 
     init_camera(&camera, (vec3){0.0f, 0.0f, 3.0f});
-    camera_set_sensitivity(&camera, 1.25f);
+    camera_set_sensitivity(&camera, 0.2f);
 
 
     while (!window_should_close(&window)) {
@@ -204,6 +202,9 @@ int main() {
 
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+        
 
         use_shader(&shader);
         set_uniform_float(&shader, "u_time", glfwGetTime());
