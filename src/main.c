@@ -2,13 +2,14 @@
 #include <glad/glad.h>
 #include "engine/shader.h"
 #include "engine/texture.h"
+#include "engine/camera.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
 
 
-
+Camera camera;
 float currentFrame = 0.0f;
 float lastFrame = 0.0f;
 
@@ -164,6 +165,8 @@ int main() {
     set_uniform_int(&shader, "u_texture2", 1);
 
 
+    init_camera(&camera, (vec3){0.0f, 0.0f, 3.0f});
+
 
     while (!glfwWindowShouldClose(window)) {
 
@@ -188,7 +191,7 @@ int main() {
         
 
         mat4 view;
-        glm_lookat(cameraPos, targetPos, cameraUp, view);
+        camera_get_view_matrix(&camera, view);
 
         mat4 projection;
         float aspect_ratio = (float)mode->width/(float)mode->height;

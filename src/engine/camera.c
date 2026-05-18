@@ -1,6 +1,4 @@
 #include "camera.h"
-#include "cglm/cam.h"
-#include "cglm/vec3.h"
 
 void init_camera(Camera *c, vec3 position){
     glm_vec3_copy(position, c->position);
@@ -64,3 +62,18 @@ void camera_process_mouse(Camera *c, float x_offset, float y_offset, bool constr
 
 }
 
+
+void camera_update_vectors(Camera *c){
+    vec3 front;
+    front[0] = cosf(glm_rad(c->yaw)) * cosf(glm_rad(c->pitch));
+    front[1] = sinf(glm_rad(c->pitch));
+    front[2] = sinf(glm_rad(c->yaw)) * cosf(glm_rad(c->pitch));
+    glm_vec3_normalize_to(front, c->front);
+
+    glm_vec3_cross(c->front, c->world_up, c->right);
+    glm_vec3_normalize(c->right);
+
+    glm_vec3_cross(c->right, c->front, c->up);
+    glm_vec3_normalize(c->up);
+
+}
