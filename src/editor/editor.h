@@ -7,7 +7,6 @@
 
 
 typedef struct{
-    ImGuiID id;
     ImGuiIO* io;
 }Editor;
 

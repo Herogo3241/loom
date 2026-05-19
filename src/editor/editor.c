@@ -14,11 +14,9 @@ bool check = false;
 void editor_init(Editor* e, GLFWwindow *window){
     igCreateContext(NULL);
     e->io = igGetIO_Nil();
-    e->id =9999;
 
     e->io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     e->io->ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-    // e->io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     e->io->ConfigDpiScaleViewports = true;
 

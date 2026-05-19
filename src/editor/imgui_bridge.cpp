@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
-#include "imgui_bridge.h"  // your own header declaring these as extern "C"
+#include "imgui_bridge.h"  
 
 extern "C" {
     void bridge_ImGui_ImplGlfw_InitForOpenGL(GLFWwindow* w, bool install_callbacks) {
