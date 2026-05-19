@@ -18,16 +18,14 @@ target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 set(IMGUI_STATIC "yes" CACHE STRING "" FORCE)
 add_subdirectory(vendored/cimgui)
 
-# Backends live inside imgui — compile them separately as C++
-# because your main sources are .c and CMake would treat them as C
 add_library(imgui_backends STATIC
     vendored/cimgui/imgui/backends/imgui_impl_glfw.cpp
     vendored/cimgui/imgui/backends/imgui_impl_opengl3.cpp
 )
 target_include_directories(imgui_backends PUBLIC
-    vendored/cimgui                        # cimgui.h
-    vendored/cimgui/imgui                  # imgui.h (needed by backends internally)
-    vendored/cimgui/imgui/backends         # imgui_impl_*.h
+    vendored/cimgui 
+    vendored/cimgui/imgui 
+    vendored/cimgui/imgui/backends      
     vendored/glfw/include
     ${GLAD_DIR}/include
 )
@@ -41,6 +39,7 @@ target_include_directories(loom PRIVATE vendored/glfw/include vendored/stb vendo
 
 
 if (WIN32)
+    find_package(OpenGL REQUIRED)
     target_link_libraries(loom PRIVATE
         cglm
         glfw

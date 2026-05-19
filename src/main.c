@@ -4,13 +4,11 @@
 #include "engine/texture.h"
 #include "engine/camera.h"
 #include "engine/window.h"
+#include "editor/editor.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include <cimgui.h>
-#include "ui/imgui_bridge.h"
 
 static char tex1path[512] = "assets/textures/wood.jpg";
 static char tex2path[512] = "assets/texture/text.png";
@@ -21,6 +19,7 @@ static char tex2err[512] = "";
 
 Window window = {0};
 Camera camera = {0};
+Editor editor = {0};
 
 
 float currentFrame = 0.0f;
@@ -205,16 +204,14 @@ int main() {
     init_camera(&camera, (vec3){0.0f, 0.0f, 3.0f});
     camera_set_sensitivity(&camera, 0.2f);
 
-    igCreateContext(NULL);
-    ImGuiIO* io = igGetIO_Nil();
-    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    igStyleColorsDark(NULL);
-    bridge_ImGui_ImplGlfw_InitForOpenGL(window.handle, true);
-    bridge_ImGui_ImplOpenGL3_Init("#version 330");
+
+    create_editor_window(&editor, "Loom Editor", 800, 300);
+
 
 
     while (!window_should_close(&window)) {
 
+        editor_run(&editor);
 
         currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -224,52 +221,11 @@ int main() {
 
 
         processInput(window.handle);
-        bridge_ImGui_ImplOpenGL3_NewFrame();
-        bridge_ImGui_ImplGlfw_NewFrame();
-        igNewFrame();
-
-        igSetWindowSize_Vec2((ImVec2){360, 160}, ImGuiCond_Once);
-        igSetNextWindowPos((ImVec2){10, 10}, ImGuiCond_Once, (ImVec2){0,0});
-        igBegin("Texture Loader", NULL, 0);
-
-        igText("Texture 1");
-        igInputText("##tex1", tex1path, sizeof(tex1path), 0, NULL, NULL);
-        igSameLine(0, 8);
-        if (igButton("Load##1", (ImVec2){50, 0})) {
-            Texture new_tex = {0};
-            if (create_texture(&new_tex, tex1path)) {
-                delete_texture(&texture1);
-                texture1 = new_tex;
-                tex1err[0] = '\0';
-            } else {
-                snprintf(tex1err, sizeof(tex1err), "Failed: %s", tex1path);
-            }
-        }
-        if (tex1err[0]) igTextColored((ImVec4){1,0.3f,0.3f,1}, tex1err);
-
-        igSpacing();
-
-        igText("Texture 2");
-        igInputText("##tex2", tex2path, sizeof(tex2path), 0, NULL, NULL);
-        igSameLine(0, 8);
-        if (igButton("Load##2", (ImVec2){50, 0})) {
-            Texture new_tex = {0};
-            if (create_texture(&new_tex, tex2path)) {
-                delete_texture(&texture2);
-                texture2 = new_tex;
-                tex2err[0] = '\0';
-            } else {
-                snprintf(tex2err, sizeof(tex2err), "Failed: %s", tex2path);
-            }
-        }
-        if (tex2err[0]) igTextColored((ImVec4){1,0.3f,0.3f,1}, tex2err);
-
-        igEnd();
-
         
 
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 
         
@@ -309,20 +265,16 @@ int main() {
         
 
 
-        igRender();
-        bridge_ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
 
         window_swap_and_poll(&window);
 
     }
 
-    bridge_ImGui_ImplOpenGL3_Shutdown();
-    bridge_ImGui_ImplGlfw_Shutdown();
-    igDestroyContext(NULL);
 
     delete_texture(&texture1);
     delete_texture(&texture2);
     delete_shader(&shader);
+    destroy_editor(&editor);
     window_destroy(&window);
     return 0;
 }
