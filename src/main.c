@@ -4,13 +4,11 @@
 #include "engine/texture.h"
 #include "engine/camera.h"
 #include "engine/window.h"
+#include "editor/editor.h"
 #include <GLFW/glfw3.h>
 #include <stdbool.h>
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
-#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
-#include <cimgui.h>
-#include "ui/imgui_bridge.h"
 
 static char tex1path[512] = "assets/textures/wood.jpg";
 static char tex2path[512] = "assets/texture/text.png";
@@ -21,6 +19,7 @@ static char tex2err[512] = "";
 
 Window window = {0};
 Camera camera = {0};
+Editor editor = {0};
 
 
 float currentFrame = 0.0f;
@@ -30,7 +29,14 @@ int lastPosX;
 int lastPosY;
 bool isfirstMouse = true;
 
+bool editorOpen = false;
+
+
+void framebuffer_size_callback(GLFWwindow* handle, int width, int height){
+    glViewport(0, 0, width, height);
+}
 void mouse_callback(GLFWwindow* window, double xpos, double ypos){
+    if(editorOpen) return;
     if (isfirstMouse) {
         lastPosX = xpos;
         lastPosY = ypos;
@@ -44,6 +50,20 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
 
     camera_process_mouse(&camera, x_offset, y_offset, deltaTime, true);
 }
+
+void key_callback(GLFWwindow* handle, int key, int scancode, int action, int mods){
+    if (key == GLFW_KEY_TAB && action == GLFW_PRESS) {
+       toggle_editor(&editorOpen); 
+
+       if (!editorOpen) {
+           window_lock_cursor(&window);
+       }else{
+           window_unlock_cursor(&window);
+           isfirstMouse = true;
+       }
+    }
+}
+
 
 void processInput(GLFWwindow* window){
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
@@ -73,23 +93,13 @@ void processInput(GLFWwindow* window){
         camera_process_mouse(&camera, x_offset, y_offset, deltaTime, true);
     }
 
-    static bool imgui_mode = false;
-    if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
-        imgui_mode = !imgui_mode;
-        if (imgui_mode) {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            isfirstMouse = true;
-        } else {
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        }
-    }
 
     
 }
 
 
 int main() {
-    if(!create_window_fullscreen(&window, "Loom")){
+    if(!create_window(&window, "Loom", 1280, 720)){
         window_destroy(&window);
         return -1;
     }
@@ -188,8 +198,7 @@ int main() {
 
 
     Texture texture1 = {0};
-    Texture texture2 = {0};
-    if(!create_texture(&texture1, "assets/textures/wood.jpg") || !create_texture(&texture2, "assets/textures/test.png")){
+    if(!create_texture(&texture1, "assets/textures/wood.jpg")){
         window_destroy(&window);
         return -1;
     }
@@ -197,20 +206,21 @@ int main() {
 
     use_shader(&shader);
     set_uniform_int(&shader, "u_texture1", 0);
-    set_uniform_int(&shader, "u_texture2", 1);
 
-    // window_lock_cursor(&window);
-    // window_set_cursor_callback(&window,mouse_callback);
+
+    glfwSetFramebufferSizeCallback(window.handle, framebuffer_size_callback);
+    window_set_key_callback(&window, key_callback);
+    window_lock_cursor(&window);
+    window_set_cursor_callback(&window,mouse_callback);
 
     init_camera(&camera, (vec3){0.0f, 0.0f, 3.0f});
     camera_set_sensitivity(&camera, 0.2f);
 
-    igCreateContext(NULL);
-    ImGuiIO* io = igGetIO_Nil();
-    io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    igStyleColorsDark(NULL);
-    bridge_ImGui_ImplGlfw_InitForOpenGL(window.handle, true);
-    bridge_ImGui_ImplOpenGL3_Init("#version 330");
+
+    editor_init(&editor, window.handle);
+
+
+
 
 
     while (!window_should_close(&window)) {
@@ -224,52 +234,11 @@ int main() {
 
 
         processInput(window.handle);
-        bridge_ImGui_ImplOpenGL3_NewFrame();
-        bridge_ImGui_ImplGlfw_NewFrame();
-        igNewFrame();
-
-        igSetWindowSize_Vec2((ImVec2){360, 160}, ImGuiCond_Once);
-        igSetNextWindowPos((ImVec2){10, 10}, ImGuiCond_Once, (ImVec2){0,0});
-        igBegin("Texture Loader", NULL, 0);
-
-        igText("Texture 1");
-        igInputText("##tex1", tex1path, sizeof(tex1path), 0, NULL, NULL);
-        igSameLine(0, 8);
-        if (igButton("Load##1", (ImVec2){50, 0})) {
-            Texture new_tex = {0};
-            if (create_texture(&new_tex, tex1path)) {
-                delete_texture(&texture1);
-                texture1 = new_tex;
-                tex1err[0] = '\0';
-            } else {
-                snprintf(tex1err, sizeof(tex1err), "Failed: %s", tex1path);
-            }
-        }
-        if (tex1err[0]) igTextColored((ImVec4){1,0.3f,0.3f,1}, tex1err);
-
-        igSpacing();
-
-        igText("Texture 2");
-        igInputText("##tex2", tex2path, sizeof(tex2path), 0, NULL, NULL);
-        igSameLine(0, 8);
-        if (igButton("Load##2", (ImVec2){50, 0})) {
-            Texture new_tex = {0};
-            if (create_texture(&new_tex, tex2path)) {
-                delete_texture(&texture2);
-                texture2 = new_tex;
-                tex2err[0] = '\0';
-            } else {
-                snprintf(tex2err, sizeof(tex2err), "Failed: %s", tex2path);
-            }
-        }
-        if (tex2err[0]) igTextColored((ImVec4){1,0.3f,0.3f,1}, tex2err);
-
-        igEnd();
-
         
 
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 
         
@@ -293,7 +262,6 @@ int main() {
 
     
         bind_texture(&texture1, 0);
-        bind_texture(&texture2, 1);
 
         glBindVertexArray(VAO);
         for(unsigned int i = 0; i < sizeof(cubePositions)/sizeof(vec3); i++){
@@ -306,23 +274,22 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
+        if(editorOpen)
+            editor_render(&editor, window.handle);
+
+
         
 
 
-        igRender();
-        bridge_ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
 
         window_swap_and_poll(&window);
 
     }
 
-    bridge_ImGui_ImplOpenGL3_Shutdown();
-    bridge_ImGui_ImplGlfw_Shutdown();
-    igDestroyContext(NULL);
 
     delete_texture(&texture1);
-    delete_texture(&texture2);
     delete_shader(&shader);
+    editor_shutdown(&editor);
     window_destroy(&window);
     return 0;
 }

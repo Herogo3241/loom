@@ -1,4 +1,5 @@
 #include "window.h"
+#include "GLFW/glfw3.h"
 #include <stdio.h>
 
 
@@ -96,8 +97,12 @@ bool window_should_close(Window* w) {
 }
 
 void window_swap_and_poll(Window* w) {
-    glfwSwapBuffers(w->handle);
     glfwPollEvents();
+    glfwSwapBuffers(w->handle);
+}
+
+void window_set_key_callback(Window *w, GLFWkeyfun fn){
+    glfwSetKeyCallback(w->handle, fn);
 }
 
 void window_set_cursor_callback(Window* w, GLFWcursorposfun fn) {
@@ -105,7 +110,12 @@ void window_set_cursor_callback(Window* w, GLFWcursorposfun fn) {
 }
 
 void window_lock_cursor(Window* w) {
+    glfwSetCursorPos(w->handle, (float)w->width/2, (float)w->height/2);
     glfwSetInputMode(w->handle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+void window_unlock_cursor(Window *w){
+    glfwSetInputMode(w->handle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 }
 
 float window_aspect_ratio(Window* w) {

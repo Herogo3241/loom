@@ -19,8 +19,10 @@ bool create_window(Window* w, const char* title, int width, int height);
 bool window_should_close(Window* w);
 void window_swap_and_poll(Window* w);
 
+void window_set_key_callback(Window *w, GLFWkeyfun fn);
 void window_set_cursor_callback(Window* w, GLFWcursorposfun fn);
 void window_lock_cursor(Window* w);
+void window_unlock_cursor(Window* w);
 
 float window_aspect_ratio(Window* w);
 
