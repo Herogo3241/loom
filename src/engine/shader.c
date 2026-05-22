@@ -73,3 +73,7 @@ void set_uniform_int(Shader *s, const char *name, int value){
 void set_uniform_mat(Shader *s, const char *name, mat4 value){
     glUniformMatrix4fv(glGetUniformLocation(s->id, name),1, GL_FALSE, (float*)value);
 }
+
+void set_uniform_vec3(Shader* s, const char* name, vec3 value){
+    glUniform3f(glGetUniformLocation(s->id, name), value[0], value[1], value[2]);
+}

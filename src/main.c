@@ -10,16 +10,12 @@
 #include <cglm/cglm.h>
 #include <cglm/cam.h>
 
-static char tex1path[512] = "assets/textures/wood.jpg";
-static char tex2path[512] = "assets/texture/text.png";
-static char tex1err[512] = "";
-static char tex2err[512] = "";
 
 
 
 Window window = {0};
 Camera camera = {0};
-Editor editor = {0};
+// Editor editor = {0};
 
 
 float currentFrame = 0.0f;
@@ -106,12 +102,17 @@ int main() {
     
 
     Shader shader = {0};
-    int success = create_shader(&shader, "assets/shaders/basic.vert", "assets/shaders/basic.frag");
+    int success = create_shader(&shader, "assets/shaders/basic.vert", "assets/shaders/texture.frag");
     if(!success){
         window_destroy(&window);
         return -1;
     }
 
+    Shader lightSourceShader = {0};
+    if(!create_shader(&lightSourceShader, "assets/shaders/basic.vert", "assets/shaders/light.frag")){
+        window_destroy(&window);
+        return -1;
+    }
 
     float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
@@ -158,7 +159,6 @@ int main() {
     };
     
     vec3 cubePositions[] = {
-        {0.0f,  0.0f,  0.0f},
         {2.0f,  5.0f, -15.0f},
         {-1.5f, -2.2f, -2.5f},
         {-3.8f, -2.0f, -12.3f},
@@ -170,10 +170,13 @@ int main() {
         {-1.3f,  1.0f, -1.5f}
     };
 
+    vec3 lightPosition = {0.0f,  0.0f,  0.0f};
+    
+
     
 
 
-    GLuint VAO, VBO, EBO;
+    GLuint VAO, VBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
@@ -202,10 +205,15 @@ int main() {
         window_destroy(&window);
         return -1;
     }
+    vec3 lightColor = {1.0f, 1.0f, 1.0f};
         
 
     use_shader(&shader);
     set_uniform_int(&shader, "u_texture1", 0);
+    set_uniform_vec3(&shader, "lightColor", lightColor);
+
+    use_shader(&lightSourceShader);
+    set_uniform_vec3(&lightSourceShader, "lightColor", lightColor);
 
 
     glfwSetFramebufferSizeCallback(window.handle, framebuffer_size_callback);
@@ -217,7 +225,7 @@ int main() {
     camera_set_sensitivity(&camera, 0.2f);
 
 
-    editor_init(&editor, window.handle);
+    // editor_init(&editor, window.handle);
 
 
 
@@ -274,8 +282,17 @@ int main() {
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
 
-        if(editorOpen)
-            editor_render(&editor, window.handle);
+        use_shader(&lightSourceShader);
+        set_uniform_mat(&lightSourceShader, "view", view);
+        set_uniform_mat(&lightSourceShader, "projection", projection);
+        mat4 lightModel;
+        glm_mat4_identity(lightModel);
+        glm_translate(lightModel, lightPosition);
+        set_uniform_mat(&lightSourceShader, "model", lightModel);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // if(editorOpen)
+        //     editor_render(&editor, window.handle);
 
 
         
@@ -289,7 +306,7 @@ int main() {
 
     delete_texture(&texture1);
     delete_shader(&shader);
-    editor_shutdown(&editor);
+    // editor_shutdown(&editor);
     window_destroy(&window);
     return 0;
 }

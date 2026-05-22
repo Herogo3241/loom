@@ -16,6 +16,7 @@ void delete_shader(Shader* s);
 void set_uniform_float(Shader* s, const char* name, float value);
 void set_uniform_int(Shader* s, const char* name, int value);
 void set_uniform_mat(Shader* s, const char* name, mat4 value);
+void set_uniform_vec3(Shader* s, const char* name, vec3 value);
 
 
 
